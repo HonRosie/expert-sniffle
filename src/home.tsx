@@ -17,7 +17,7 @@ interface NewActionProps {}
 
 interface ShipPartsProps {}
 
-interface AddPartsProps {}
+interface AddPartsProps {onAddPartPropertyChange:(property:keyof PartInfo, value:any)=>void}
 
 interface RefundProps {}
 
@@ -43,6 +43,45 @@ function getModelOptions() {
 
 function getPartOptions(model: string) {
     return ["a", "b", "c"]
+}
+
+function eventDispatch(action:string, args:any) {
+    var shouldDraw = true;
+    switch(action){
+        case "ship":
+            ship(args)
+            break;
+        case "refund":
+            refund(args)
+            break;
+        case "emailCust":
+            emailCust(args)
+            break;
+        case "emailChina":
+            emailChina(args)
+            break;
+    }
+    if (shouldDraw){
+        draw()
+    }
+}
+
+function ship(args:any){
+    var contentString = "action taken: " + args.content
+    activityHistory.push({kind: ActivityKind.Ship, date: new Date(), content: contentString})
+}
+
+function refund(args:any){
+    var contentString = "action taken: " + args.content
+    activityHistory.push({kind: ActivityKind.Refund, date: new Date(), content: contentString})
+}
+function emailCust(args:any){
+    var contentString = "action taken: " + args.content
+    activityHistory.push({kind: ActivityKind.EmailChina, date: new Date(), content: contentString})
+}
+function emailChina(args:any){
+    var contentString = "action taken: " + args.content
+    activityHistory.push({kind: ActivityKind.EmailCust, date: new Date(), content: contentString})
 }
 
 ////////////////////////////////////////////////
@@ -91,11 +130,6 @@ class CustInfo extends React.Component<CustInfoProps, {}> {
                 <input id="email" type="text"/>
                 <label htmlFor="phone">Phone: </label>
                 <input id="phone" type="text"/>
-
-                <label htmlFor="models">Models: </label>
-                <select name="models" id="models">
-                    {models}
-                </select>
                 
                 <input type="submit" value="Submit"/>
             </form>
@@ -107,58 +141,49 @@ class CustInfo extends React.Component<CustInfoProps, {}> {
 // Activity Section
 // Activity obj = {date: "", content: ""}
 ////////////////////////////////////////////////
-let activityHistory:any = []
-
-//////////////////
-//Utilities
-/////////////////
-function eventDispatch(action:string, args:any) {
-    switch(action){
-        case "ship":
-            ship(args)
-            break;
-        case "refund":
-            console.log("here")
-            refund(args)
-            break;
-        case "emailCust":
-            emailCust(args)
-            break;
-        case "emailChina":
-            emailChina(args)
-            break;
-    }
-    draw()
+enum ActivityKind {
+    Ship,
+    Refund,
+    EmailChina,
+    EmailCust
 }
 
-function ship(args:any){
-    var contentString = "action taken: " + args.value.content
-    activityHistory.push({content: contentString})
-    partsToShip.push({"model": args.value.model, "part": args.value.part})
+interface ActivityData {
+    kind: ActivityKind
+    date: Date,
+    content: any
 }
 
-function refund(args:any){
-    var contentString = "action taken: " + args.value.content
-    activityHistory.push({content: contentString})
-}
-function emailCust(args:any){
-    var contentString = "action taken: " + args.value.content
-    activityHistory.push({content: contentString})
-}
-function emailChina(args:any){
-    var contentString = "action taken: " + args.value.content
-    activityHistory.push({content: contentString})
-}
-
+let activityHistory:ActivityData[] = []
 //Renders list of completed actions
 class ActivityList extends React.Component<ActivityListProps, {}> {
     render() {
-        var activities = activityHistory.map(function(activity:any){
-            return (
-                <div>
-                    <Activity activityData={activity} />
-                </div>
-            )
+        var activities = activityHistory.map(function(activity:ActivityData){
+            if (activity.kind === ActivityKind.Ship) {
+                return (
+                    <div>
+                        <ShipActivity activityData={activity} />
+                    </div>
+                )
+            } else if (activity.kind === ActivityKind.Refund) {
+                return (
+                    <div>
+                        <RefundActivity activityData={activity} />
+                    </div>
+                )
+            } else if (activity.kind === ActivityKind.EmailChina) {
+                return (
+                    <div>
+                        <EmailChinaActivity activityData={activity} />
+                    </div>
+                )
+            } else if (activity.kind === ActivityKind.EmailCust) {
+                return (
+                    <div>
+                        <EmailCustActivity activityData={activity} />
+                    </div>
+                )
+            }
         })
         return (
             <div>
@@ -171,11 +196,51 @@ class ActivityList extends React.Component<ActivityListProps, {}> {
     }
 }
 
-class Activity extends React.Component<ActivityProps, {}> {
+class ShipActivity extends React.Component<ActivityProps, {}> {
     render() {
         return (
             <div>
                 <div>
+                    {this.props.activityData.date.getSeconds()}
+                    {this.props.activityData.content}
+                </div>
+            </div>
+        )
+    }
+}
+
+class RefundActivity extends React.Component<ActivityProps, {}> {
+    render() {
+        return (
+            <div>
+                <div>
+                    {this.props.activityData.date.getSeconds()}
+                    {this.props.activityData.content}
+                </div>
+            </div>
+        )
+    }
+}
+
+class EmailChinaActivity extends React.Component<ActivityProps, {}> {
+    render() {
+        return (
+            <div>
+                <div>
+                    {this.props.activityData.date.getSeconds()}
+                    {this.props.activityData.content}
+                </div>
+            </div>
+        )
+    }
+}
+
+class EmailCustActivity extends React.Component<ActivityProps, {}> {
+    render() {
+        return (
+            <div>
+                <div>
+                    {this.props.activityData.date.getSeconds()}
                     {this.props.activityData.content}
                 </div>
             </div>
@@ -188,8 +253,8 @@ interface ActionState {
 }
 class NewAction extends React.Component<NewActionProps, ActionState> {
     constructor(props:NewActionProps){
-        console.log("resetting newaction state")
         super(props)
+        console.log("resetting newaction state")
         this.state={
             action:""
         }
@@ -198,25 +263,25 @@ class NewAction extends React.Component<NewActionProps, ActionState> {
         this.handleEmailChina = this.handleEmailChina.bind(this)
         this.handleEmailCust = this.handleEmailCust.bind(this)
     }
-    handleShip() {
+    handleShip = () => {
         console.log("setting state ship")
         this.setState({
             action: "ship"
         })
     }
-    handleRefund() {
+    handleRefund = () => {
         console.log("setting state refund")
         this.setState({
             action: "refund"
         })
     }
-    handleEmailChina() {
+    handleEmailChina = () => {
         console.log("setting state china")
         this.setState({
             action: "emailChina"
         })
     }
-    handleEmailCust() {
+    handleEmailCust = () => {
         console.log("setting state cust")
         this.setState({
             action: "emailCust"
@@ -225,7 +290,6 @@ class NewAction extends React.Component<NewActionProps, ActionState> {
     render() {
         var newAction: any
         if (this.state.action == "ship"){
-            console.log("rendering ship")
             this.state.action = ""
             newAction = <ShipParts />;
         } else if (this.state.action == "refund") {
@@ -267,60 +331,130 @@ class NewAction extends React.Component<NewActionProps, ActionState> {
 }
 
 //partsObject = {model: "", part: ""}
-let partsToShip:any = []
-class ShipParts extends React.Component<ShipPartsProps, {}> {
+interface ShipPartsState {
+    custInfo: CustomerInfo,
+    partsInfo: PartInfo,
+    partsToShip: any
+}
+
+interface CustomerInfo {
+    firstName: string
+}
+
+interface PartInfo {
+    id: number,
+    model:string,
+    part:string,
+}
+
+class ShipParts extends React.Component<ShipPartsProps, ShipPartsState> {
+
+    constructor(props:ShipPartsProps) {
+        super(props);
+        this.state = {
+            custInfo: {"firstName": null},
+            partsInfo: {"id": null, "model": "1", "part": "1"},
+            partsToShip: []
+        };
+    }
+
+    onAddPartPropertyChange = (property:keyof PartInfo, value:any) => {
+        console.log("onAddPart");
+
+        var partsInfo = this.state.partsInfo
+        partsInfo[property] = value;
+    }
+
+    handleAddPart = () => {
+        console.log("save Add Part", this.state.partsInfo);
+        var partsInfo = this.state.partsInfo;
+        var newPart = {id: this.state.partsToShip.length, model: partsInfo.model, part: partsInfo.part};
+        this.state.partsToShip.push(newPart);
+        this.setState({
+            custInfo: {"firstName": null},
+            partsInfo: {"id": null, "model": "1", "part": "1"},
+            partsToShip: this.state.partsToShip
+        });
+    }
+
+    handleSubmit = () => {
+        eventDispatch("ship", {content: this.state.partsToShip})
+    }
+
+    handleInput = (event:any) => {
+        debugger;
+        console.log(event)
+    }
+
     render() {
-        var parts = partsToShip.map(function(part:any){
+        var parts = this.state.partsToShip.map(function(part:any){
             return (
             <div>
                 <p>
-                    part.model
-                </p>
-                <p>
-                    part.part
+                    {part.id}
+                    {part.model}
+                    {part.part}
                 </p>
             </div>
             )
         })
+
+
         return (
             <div>
+                <label htmlFor="firstName">First Name: </label>
+                <input id="firstName" type="text" onInput={this.handleInput}/>
+                <label htmlFor="lastName">Last Name: </label>
+                <input id="lastName" type="text"/>
+
+                <label htmlFor="address">Address 1: </label>
+                <input id="address" type="text"/>
+                <label htmlFor="address">Address 2: </label>
+                <input id="address" type="text"/>
+                <label htmlFor="city">City: </label>
+                <input id="city" type="text"/>
+                <label htmlFor="zipCode">Zip Code: </label>
+                <input id="zipCode" type="text"/>
+
+                <label htmlFor="email">Email: </label>
+                <input id="email" type="text"/>
+                <label htmlFor="phone">Phone: </label>
+                <input id="phone" type="text"/>
+                <div>
+                    <button
+                        name="Add Part"
+                        onClick={this.handleAddPart}>
+                        Add Part
+                    </button>
+                    <button
+                        name="Submit"
+                        onClick={this.handleSubmit}>
+                        Submit
+                    </button>
+                </div>
+                <AddParts onAddPartPropertyChange={this.onAddPartPropertyChange} />
                 {parts}
-                <AddParts />
-                Ship Parts
             </div>
         )
     }
 }
 
-interface AddPartsState {
-    model: string,
-    part: string
-}
-class AddParts extends React.Component<AddPartsProps, AddPartsState> {
+class AddParts extends React.Component<AddPartsProps, {}> {
     constructor(props:AddPartsProps) {
         super(props);
-        this.state = {model: '1', part:'1'};
 
         this.handleModelChange = this.handleModelChange.bind(this);
         this.handlePartChange = this.handlePartChange.bind(this);
-        this.handleSubmit = this.handleSubmit.bind(this);
     }
 
-    handleModelChange(event:any) {
-        console.log(event.target.value)
-        this.setState({model: event.target.value, part: this.state.part});
+    handleModelChange = (event:any) => {
+        this.props.onAddPartPropertyChange("model", event.target.value);
     }
 
-    handlePartChange(event:any) {
-        this.setState({model: this.state.model, part: event.target.value});
+    handlePartChange = (event:any) => {
+        this.props.onAddPartPropertyChange("part", event.target.value);
     }
 
-    handleSubmit(event:any){
-        debugger;
-        console.log(this.state)
-        eventDispatch("renderActivity", {"value": {"model":this.state.model, "part":this.state.part}})
-        event.preventDefault()
-    }
     render() {
         var modelOptions = getModelOptions()
         var models = modelOptions.map(function(model){
@@ -334,19 +468,17 @@ class AddParts extends React.Component<AddPartsProps, AddPartsState> {
         })
 
         return (
-            <form onSubmit={this.handleSubmit}>
+            <form>
                 <label htmlFor="models">Models: </label>
-                <select name="models" id="models" value={this.state.model} onChange={this.handleModelChange}>
+                <select name="models" id="models" onChange={this.handleModelChange}>
                     {models}
                 </select>
                 <label htmlFor="parts">Parts: </label>
-                <select name="parts" id="parts" value={this.state.part} onChange={this.handlePartChange}>
+                <select name="parts" id="parts" onChange={this.handlePartChange}>
                     {models}
                 </select>
                 <label htmlFor="quantity">Quantity: </label>
                 <input id="quantity" type="text"/>
-                
-                <input type="submit" value="Submit"/>
             </form>
         )
     }
@@ -355,7 +487,7 @@ class AddParts extends React.Component<AddPartsProps, AddPartsState> {
 class Refund extends React.Component<RefundProps, {}> {
     handleSubmitRefund(event:any){
         console.log("handling submit refund")
-        eventDispatch("refund", {value: {content: "refund"}})
+        eventDispatch("refund", {content: "refund"})
     }
 
     render() {
@@ -375,7 +507,7 @@ class Refund extends React.Component<RefundProps, {}> {
 class EmailChina extends React.Component<EmailChinaProps, {}> {
     handleEmailChinaSubmit(event:any){
         console.log("handling submit emailChina")
-        eventDispatch("emailChina", {value:{content:"email China"}})
+        eventDispatch("emailChina", {content:"email China"})
         event.preventDefault()
     }
 
@@ -394,7 +526,7 @@ class EmailChina extends React.Component<EmailChinaProps, {}> {
 class EmailCust extends React.Component<EmailCustProps, {}> {
     handleEmailCustSubmit(event:any){
         console.log("handling submit emailCust")
-        eventDispatch("emailCust", {value:{content:"email Customer"}})
+        eventDispatch("emailCust", {content:"email Customer"})
         event.preventDefault()
     }
 

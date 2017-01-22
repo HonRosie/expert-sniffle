@@ -61,6 +61,42 @@
 	function getPartOptions(model) {
 	    return ["a", "b", "c"];
 	}
+	function eventDispatch(action, args) {
+	    var shouldDraw = true;
+	    switch (action) {
+	        case "ship":
+	            ship(args);
+	            break;
+	        case "refund":
+	            refund(args);
+	            break;
+	        case "emailCust":
+	            emailCust(args);
+	            break;
+	        case "emailChina":
+	            emailChina(args);
+	            break;
+	    }
+	    if (shouldDraw) {
+	        draw();
+	    }
+	}
+	function ship(args) {
+	    var contentString = "action taken: " + args.content;
+	    activityHistory.push({ kind: ActivityKind.Ship, date: new Date(), content: contentString });
+	}
+	function refund(args) {
+	    var contentString = "action taken: " + args.content;
+	    activityHistory.push({ kind: ActivityKind.Refund, date: new Date(), content: contentString });
+	}
+	function emailCust(args) {
+	    var contentString = "action taken: " + args.content;
+	    activityHistory.push({ kind: ActivityKind.EmailChina, date: new Date(), content: contentString });
+	}
+	function emailChina(args) {
+	    var contentString = "action taken: " + args.content;
+	    activityHistory.push({ kind: ActivityKind.EmailCust, date: new Date(), content: contentString });
+	}
 	////////////////////////////////////////////////
 	// Ticket Page
 	////////////////////////////////////////////////
@@ -106,8 +142,6 @@
 	            React.createElement("input", { id: "email", type: "text" }),
 	            React.createElement("label", { htmlFor: "phone" }, "Phone: "),
 	            React.createElement("input", { id: "phone", type: "text" }),
-	            React.createElement("label", { htmlFor: "models" }, "Models: "),
-	            React.createElement("select", { name: "models", id: "models" }, models),
 	            React.createElement("input", { type: "submit", value: "Submit" })));
 	    };
 	    return CustInfo;
@@ -116,45 +150,14 @@
 	// Activity Section
 	// Activity obj = {date: "", content: ""}
 	////////////////////////////////////////////////
+	var ActivityKind;
+	(function (ActivityKind) {
+	    ActivityKind[ActivityKind["Ship"] = 0] = "Ship";
+	    ActivityKind[ActivityKind["Refund"] = 1] = "Refund";
+	    ActivityKind[ActivityKind["EmailChina"] = 2] = "EmailChina";
+	    ActivityKind[ActivityKind["EmailCust"] = 3] = "EmailCust";
+	})(ActivityKind || (ActivityKind = {}));
 	var activityHistory = [];
-	//////////////////
-	//Utilities
-	/////////////////
-	function eventDispatch(action, args) {
-	    switch (action) {
-	        case "ship":
-	            ship(args);
-	            break;
-	        case "refund":
-	            console.log("here");
-	            refund(args);
-	            break;
-	        case "emailCust":
-	            emailCust(args);
-	            break;
-	        case "emailChina":
-	            emailChina(args);
-	            break;
-	    }
-	    draw();
-	}
-	function ship(args) {
-	    var contentString = "action taken: " + args.value.content;
-	    activityHistory.push({ content: contentString });
-	    partsToShip.push({ "model": args.value.model, "part": args.value.part });
-	}
-	function refund(args) {
-	    var contentString = "action taken: " + args.value.content;
-	    activityHistory.push({ content: contentString });
-	}
-	function emailCust(args) {
-	    var contentString = "action taken: " + args.value.content;
-	    activityHistory.push({ content: contentString });
-	}
-	function emailChina(args) {
-	    var contentString = "action taken: " + args.value.content;
-	    activityHistory.push({ content: contentString });
-	}
 	//Renders list of completed actions
 	var ActivityList = (function (_super) {
 	    __extends(ActivityList, _super);
@@ -163,8 +166,22 @@
 	    }
 	    ActivityList.prototype.render = function () {
 	        var activities = activityHistory.map(function (activity) {
-	            return (React.createElement("div", null,
-	                React.createElement(Activity, { activityData: activity })));
+	            if (activity.kind === ActivityKind.Ship) {
+	                return (React.createElement("div", null,
+	                    React.createElement(ShipActivity, { activityData: activity })));
+	            }
+	            else if (activity.kind === ActivityKind.Refund) {
+	                return (React.createElement("div", null,
+	                    React.createElement(RefundActivity, { activityData: activity })));
+	            }
+	            else if (activity.kind === ActivityKind.EmailChina) {
+	                return (React.createElement("div", null,
+	                    React.createElement(EmailChinaActivity, { activityData: activity })));
+	            }
+	            else if (activity.kind === ActivityKind.EmailCust) {
+	                return (React.createElement("div", null,
+	                    React.createElement(EmailCustActivity, { activityData: activity })));
+	            }
 	        });
 	        return (React.createElement("div", null,
 	            React.createElement("ul", null, activities),
@@ -172,23 +189,87 @@
 	    };
 	    return ActivityList;
 	}(React.Component));
-	var Activity = (function (_super) {
-	    __extends(Activity, _super);
-	    function Activity() {
+	var ShipActivity = (function (_super) {
+	    __extends(ShipActivity, _super);
+	    function ShipActivity() {
 	        return _super.apply(this, arguments) || this;
 	    }
-	    Activity.prototype.render = function () {
+	    ShipActivity.prototype.render = function () {
 	        return (React.createElement("div", null,
-	            React.createElement("div", null, this.props.activityData.content)));
+	            React.createElement("div", null,
+	                this.props.activityData.date.getSeconds(),
+	                this.props.activityData.content)));
 	    };
-	    return Activity;
+	    return ShipActivity;
+	}(React.Component));
+	var RefundActivity = (function (_super) {
+	    __extends(RefundActivity, _super);
+	    function RefundActivity() {
+	        return _super.apply(this, arguments) || this;
+	    }
+	    RefundActivity.prototype.render = function () {
+	        return (React.createElement("div", null,
+	            React.createElement("div", null,
+	                this.props.activityData.date.getSeconds(),
+	                this.props.activityData.content)));
+	    };
+	    return RefundActivity;
+	}(React.Component));
+	var EmailChinaActivity = (function (_super) {
+	    __extends(EmailChinaActivity, _super);
+	    function EmailChinaActivity() {
+	        return _super.apply(this, arguments) || this;
+	    }
+	    EmailChinaActivity.prototype.render = function () {
+	        return (React.createElement("div", null,
+	            React.createElement("div", null,
+	                this.props.activityData.date.getSeconds(),
+	                this.props.activityData.content)));
+	    };
+	    return EmailChinaActivity;
+	}(React.Component));
+	var EmailCustActivity = (function (_super) {
+	    __extends(EmailCustActivity, _super);
+	    function EmailCustActivity() {
+	        return _super.apply(this, arguments) || this;
+	    }
+	    EmailCustActivity.prototype.render = function () {
+	        return (React.createElement("div", null,
+	            React.createElement("div", null,
+	                this.props.activityData.date.getSeconds(),
+	                this.props.activityData.content)));
+	    };
+	    return EmailCustActivity;
 	}(React.Component));
 	var NewAction = (function (_super) {
 	    __extends(NewAction, _super);
 	    function NewAction(props) {
-	        var _this;
+	        var _this = _super.call(this, props) || this;
+	        _this.handleShip = function () {
+	            console.log("setting state ship");
+	            _this.setState({
+	                action: "ship"
+	            });
+	        };
+	        _this.handleRefund = function () {
+	            console.log("setting state refund");
+	            _this.setState({
+	                action: "refund"
+	            });
+	        };
+	        _this.handleEmailChina = function () {
+	            console.log("setting state china");
+	            _this.setState({
+	                action: "emailChina"
+	            });
+	        };
+	        _this.handleEmailCust = function () {
+	            console.log("setting state cust");
+	            _this.setState({
+	                action: "emailCust"
+	            });
+	        };
 	        console.log("resetting newaction state");
-	        _this = _super.call(this, props) || this;
 	        _this.state = {
 	            action: ""
 	        };
@@ -198,34 +279,9 @@
 	        _this.handleEmailCust = _this.handleEmailCust.bind(_this);
 	        return _this;
 	    }
-	    NewAction.prototype.handleShip = function () {
-	        console.log("setting state ship");
-	        this.setState({
-	            action: "ship"
-	        });
-	    };
-	    NewAction.prototype.handleRefund = function () {
-	        console.log("setting state refund");
-	        this.setState({
-	            action: "refund"
-	        });
-	    };
-	    NewAction.prototype.handleEmailChina = function () {
-	        console.log("setting state china");
-	        this.setState({
-	            action: "emailChina"
-	        });
-	    };
-	    NewAction.prototype.handleEmailCust = function () {
-	        console.log("setting state cust");
-	        this.setState({
-	            action: "emailCust"
-	        });
-	    };
 	    NewAction.prototype.render = function () {
 	        var newAction;
 	        if (this.state.action == "ship") {
-	            console.log("rendering ship");
 	            this.state.action = "";
 	            newAction = React.createElement(ShipParts, null);
 	        }
@@ -250,23 +306,70 @@
 	    };
 	    return NewAction;
 	}(React.Component));
-	//partsObject = {model: "", part: ""}
-	var partsToShip = [];
 	var ShipParts = (function (_super) {
 	    __extends(ShipParts, _super);
-	    function ShipParts() {
-	        return _super.apply(this, arguments) || this;
+	    function ShipParts(props) {
+	        var _this = _super.call(this, props) || this;
+	        _this.onAddPartPropertyChange = function (property, value) {
+	            console.log("onAddPart");
+	            var partsInfo = _this.state.partsInfo;
+	            partsInfo[property] = value;
+	        };
+	        _this.handleAddPart = function () {
+	            console.log("save Add Part", _this.state.partsInfo);
+	            var partsInfo = _this.state.partsInfo;
+	            var newPart = { id: _this.state.partsToShip.length, model: partsInfo.model, part: partsInfo.part };
+	            _this.state.partsToShip.push(newPart);
+	            _this.setState({
+	                custInfo: { "firstName": null },
+	                partsInfo: { "id": null, "model": "1", "part": "1" },
+	                partsToShip: _this.state.partsToShip
+	            });
+	        };
+	        _this.handleSubmit = function () {
+	            eventDispatch("ship", { content: _this.state.partsToShip });
+	        };
+	        _this.handleInput = function (event) {
+	            debugger;
+	            console.log(event);
+	        };
+	        _this.state = {
+	            custInfo: { "firstName": null },
+	            partsInfo: { "id": null, "model": "1", "part": "1" },
+	            partsToShip: []
+	        };
+	        return _this;
 	    }
 	    ShipParts.prototype.render = function () {
-	        var parts = partsToShip.map(function (part) {
+	        var parts = this.state.partsToShip.map(function (part) {
 	            return (React.createElement("div", null,
-	                React.createElement("p", null, "part.model"),
-	                React.createElement("p", null, "part.part")));
+	                React.createElement("p", null,
+	                    part.id,
+	                    part.model,
+	                    part.part)));
 	        });
 	        return (React.createElement("div", null,
-	            parts,
-	            React.createElement(AddParts, null),
-	            "Ship Parts"));
+	            React.createElement("label", { htmlFor: "firstName" }, "First Name: "),
+	            React.createElement("input", { id: "firstName", type: "text", onInput: this.handleInput }),
+	            React.createElement("label", { htmlFor: "lastName" }, "Last Name: "),
+	            React.createElement("input", { id: "lastName", type: "text" }),
+	            React.createElement("label", { htmlFor: "address" }, "Address 1: "),
+	            React.createElement("input", { id: "address", type: "text" }),
+	            React.createElement("label", { htmlFor: "address" }, "Address 2: "),
+	            React.createElement("input", { id: "address", type: "text" }),
+	            React.createElement("label", { htmlFor: "city" }, "City: "),
+	            React.createElement("input", { id: "city", type: "text" }),
+	            React.createElement("label", { htmlFor: "zipCode" }, "Zip Code: "),
+	            React.createElement("input", { id: "zipCode", type: "text" }),
+	            React.createElement("label", { htmlFor: "email" }, "Email: "),
+	            React.createElement("input", { id: "email", type: "text" }),
+	            React.createElement("label", { htmlFor: "phone" }, "Phone: "),
+	            React.createElement("input", { id: "phone", type: "text" }),
+	            React.createElement("div", null,
+	                React.createElement("button", { name: "Add Part", onClick: this.handleAddPart }, "Add Part"),
+	                React.createElement("button", { name: "Submit", onClick: this.handleSubmit }, "Submit")),
+	            React.createElement(AddParts, { onAddPartPropertyChange: this.onAddPartPropertyChange }),
+	            parts));
 	    };
 	    return ShipParts;
 	}(React.Component));
@@ -274,25 +377,16 @@
 	    __extends(AddParts, _super);
 	    function AddParts(props) {
 	        var _this = _super.call(this, props) || this;
-	        _this.state = { model: '1', part: '1' };
+	        _this.handleModelChange = function (event) {
+	            _this.props.onAddPartPropertyChange("model", event.target.value);
+	        };
+	        _this.handlePartChange = function (event) {
+	            _this.props.onAddPartPropertyChange("part", event.target.value);
+	        };
 	        _this.handleModelChange = _this.handleModelChange.bind(_this);
 	        _this.handlePartChange = _this.handlePartChange.bind(_this);
-	        _this.handleSubmit = _this.handleSubmit.bind(_this);
 	        return _this;
 	    }
-	    AddParts.prototype.handleModelChange = function (event) {
-	        console.log(event.target.value);
-	        this.setState({ model: event.target.value, part: this.state.part });
-	    };
-	    AddParts.prototype.handlePartChange = function (event) {
-	        this.setState({ model: this.state.model, part: event.target.value });
-	    };
-	    AddParts.prototype.handleSubmit = function (event) {
-	        debugger;
-	        console.log(this.state);
-	        eventDispatch("renderActivity", { "value": { "model": this.state.model, "part": this.state.part } });
-	        event.preventDefault();
-	    };
 	    AddParts.prototype.render = function () {
 	        var modelOptions = getModelOptions();
 	        var models = modelOptions.map(function (model) {
@@ -303,14 +397,13 @@
 	        var parts = partOptions.map(function (part) {
 	            return React.createElement("option", { value: part, key: part }, part);
 	        });
-	        return (React.createElement("form", { onSubmit: this.handleSubmit },
+	        return (React.createElement("form", null,
 	            React.createElement("label", { htmlFor: "models" }, "Models: "),
-	            React.createElement("select", { name: "models", id: "models", value: this.state.model, onChange: this.handleModelChange }, models),
+	            React.createElement("select", { name: "models", id: "models", onChange: this.handleModelChange }, models),
 	            React.createElement("label", { htmlFor: "parts" }, "Parts: "),
-	            React.createElement("select", { name: "parts", id: "parts", value: this.state.part, onChange: this.handlePartChange }, models),
+	            React.createElement("select", { name: "parts", id: "parts", onChange: this.handlePartChange }, models),
 	            React.createElement("label", { htmlFor: "quantity" }, "Quantity: "),
-	            React.createElement("input", { id: "quantity", type: "text" }),
-	            React.createElement("input", { type: "submit", value: "Submit" })));
+	            React.createElement("input", { id: "quantity", type: "text" })));
 	    };
 	    return AddParts;
 	}(React.Component));
@@ -321,7 +414,7 @@
 	    }
 	    Refund.prototype.handleSubmitRefund = function (event) {
 	        console.log("handling submit refund");
-	        eventDispatch("refund", { value: { content: "refund" } });
+	        eventDispatch("refund", { content: "refund" });
 	    };
 	    Refund.prototype.render = function () {
 	        return (React.createElement("div", null,
@@ -337,7 +430,7 @@
 	    }
 	    EmailChina.prototype.handleEmailChinaSubmit = function (event) {
 	        console.log("handling submit emailChina");
-	        eventDispatch("emailChina", { value: { content: "email China" } });
+	        eventDispatch("emailChina", { content: "email China" });
 	        event.preventDefault();
 	    };
 	    EmailChina.prototype.render = function () {
@@ -355,7 +448,7 @@
 	    }
 	    EmailCust.prototype.handleEmailCustSubmit = function (event) {
 	        console.log("handling submit emailCust");
-	        eventDispatch("emailCust", { value: { content: "email Customer" } });
+	        eventDispatch("emailCust", { content: "email Customer" });
 	        event.preventDefault();
 	    };
 	    EmailCust.prototype.render = function () {
