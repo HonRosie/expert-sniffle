@@ -25,7 +25,7 @@ interface EmailChinaProps {}
 
 interface EmailCustProps {}
 
-interface TicketProps {}
+interface TicketProps {ticket:ticketInfo}
 
 interface TicketListProps {}
 
@@ -546,15 +546,37 @@ class EmailCust extends React.Component<EmailCustProps, {}> {
 // Ticket List
 ////////////////////////////////////////////////
 
+interface ticketInfo {
+    sender: string,
+    title: string,
+    date: Date
+}
+
 /*
 Gets list of all open email. Parses out relevant information and passes it to Ticket
 */
+let ticketList: ticketInfo[] = [{"sender": "foo", "title": "bar", "date": new Date()}]
 class TicketList extends React.Component<TicketListProps, {}> {
-
+    render() {
+        var tickets = ticketList.map(function(ticket:ticketInfo){
+            return <Ticket ticket={ticket}/>
+        })
+        return (
+            <ul>
+                {tickets}
+            </ul>
+        )
+    }
 }
 
 class Ticket extends React.Component<TicketProps, {}> {
-
+    render() {
+        return (
+            <li>
+                {this.props.ticket.sender}
+            </li>
+        )
+    }
 }
 
 ////////////////////////////////////////////////
@@ -569,8 +591,7 @@ class Home extends React.Component<HomeProps, {}> {
     render() {
         return <div>
             Hello yo yo
-            <CustInfo />
-            <ActivityList/>
+            <TicketList />
         </div>
     }
 }
